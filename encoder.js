@@ -7,7 +7,7 @@ const encode = (text, shift, action) => {
     .map((el) => {
       if (alphabet.includes(el)) {
         const index = (alphabet.indexOf(el) + shift * 2) % 52;
-        return alphabet[index];
+        return alphabet.slice(index, index + 1);
       }
       return el;
     })

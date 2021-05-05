@@ -1,12 +1,23 @@
-const { program } = require("commander");
+const { pipeline, Transform } = require("stream");
+const fs = require("fs");
 
-program
-  .option("-s, --shift <shift>", "shift")
-  .option("-i, --input <input>", "input")
-  .option("-o, --output <output>", "output")
-  .option("-a, --action <action>", "action")
-  .parse();
+const options = require("./options");
+const validateOptions = require("./validator");
+const encode = require("./encoder");
 
-const options = program.opts();
+validateOptions(options);
 
-console.log(options);
+const readableStream = options.input ? fs.createReadStream(options.input, "utf8") : process.stdin;
+const writableStream = options.output
+  ? fs.createWriteStream(options.output, { flags: "a" })
+  : process.stdout;
+const transformStream = new Transform({
+  transform(chunk, encoding, callback) {
+    this.push(encode(chunk.toString(), options.shift, options.action));
+    callback();
+  },
+});
+
+pipeline(readableStream, transformStream, writableStream, (err) =>
+  err ? console.error(err) : console.log("Done")
+);
